@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCUrandomizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">PCU<span>randomizer</span></h1>
+  </header>
+
+  <!-- ====== VISTA 1: ENTRADA ====== -->
+  <main id="view-input" class="view">
+    <p class="hint">Escribe un concepto y presiona <kbd>Enter</kbd> para agregarlo. Sin límites.</p>
+
+    <div class="columns">
+      <section class="column" data-key="personajes">
+        <h2>Personaje</h2>
+        <input type="text" class="concept-input" placeholder="Agregar personaje…" autocomplete="off">
+        <ul class="chips"></ul>
+      </section>
+
+      <section class="column" data-key="caracteristicas">
+        <h2>Características</h2>
+        <input type="text" class="concept-input" placeholder="Agregar característica…" autocomplete="off">
+        <ul class="chips"></ul>
+      </section>
+
+      <section class="column" data-key="universos">
+        <h2>Universo</h2>
+        <input type="text" class="concept-input" placeholder="Agregar universo…" autocomplete="off">
+        <ul class="chips"></ul>
+      </section>
+    </div>
+
+    <div class="actions">
+      <div class="actions-buttons">
+        <button id="go-btn" class="go-btn" disabled>GO!</button>
+        <button id="clear-btn" class="ghost-btn" disabled>Limpiar listas</button>
+      </div>
+      <p id="go-help" class="go-help">Necesitas al menos un concepto en cada columna.</p>
+    </div>
+  </main>
+
+  <!-- ====== VISTA 2: RULETA ====== -->
+  <main id="view-roulette" class="view hidden">
+    <div class="reels">
+      <div class="reel" data-key="personajes">
+        <div class="reel-window">
+          <div class="reel-strip"></div>
+        </div>
+        <span class="reel-label">Personaje</span>
+      </div>
+      <div class="reel" data-key="caracteristicas">
+        <div class="reel-window">
+          <div class="reel-strip"></div>
+        </div>
+        <span class="reel-label">Características</span>
+      </div>
+      <div class="reel" data-key="universos">
+        <div class="reel-window">
+          <div class="reel-strip"></div>
+        </div>
+        <span class="reel-label">Universo</span>
+      </div>
+    </div>
+
+    <div class="roulette-actions">
+      <button id="back-btn" class="ghost-btn">← Volver</button>
+      <button id="anim-toggle" class="ghost-btn">Animación: ON</button>
+      <button id="next-btn" class="next-btn" aria-label="Siguiente tripleta">→</button>
+    </div>
+  </main>
+
+  <!-- ====== MODAL DE CONFIRMACIÓN ====== -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-emoji" aria-hidden="true">🧹</div>
+      <h2 id="modal-title">¿Limpiar todo?</h2>
+      <p class="modal-text">Se borrarán todos los conceptos de las tres columnas. Esta acción no se puede deshacer.</p>
+      <div class="modal-buttons">
+        <button id="modal-cancel" class="ghost-btn">Cancelar</button>
+        <button id="modal-confirm" class="danger-btn">Sí, borrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
