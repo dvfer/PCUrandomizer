@@ -9,7 +9,7 @@
   /* ---- Estado ---- */
   var state = loadData();
   var animEnabled = loadAnim();
-  var lastTriplet = null; // { personajes: idx, ... }
+  var used = { personajes: new Set(), caracteristicas: new Set(), universos: new Set() };
   var spinning = false;
 
   /* ---- Persistencia ---- */
@@ -48,6 +48,8 @@
   var modalOverlay = document.getElementById("modal-overlay");
   var modalConfirm = document.getElementById("modal-confirm");
   var modalCancel = document.getElementById("modal-cancel");
+  var exhaustedMsg = document.getElementById("exhausted-msg");
+  var historyList = document.getElementById("history-list");
 
   var columns = {}; // key -> { input, chips }
   document.querySelectorAll("#view-input .column").forEach(function (col) {
@@ -153,33 +155,51 @@
     viewInput.classList.remove("hidden");
   }
 
-  /* ---- Generación de tripletas ---- */
-  function randIndex(len) {
-    return Math.floor(Math.random() * len);
+  /* ---- Generación de tripletas (sin reemplazo por columna) ---- */
+  function resetUsed() {
+    KEYS.forEach(function (k) { used[k].clear(); });
+    historyList.innerHTML = "";
+  }
+
+  // ¿queda al menos un ítem sin usar en cada columna?
+  function canSpin() {
+    return KEYS.every(function (k) {
+      return state[k].length - used[k].size > 0;
+    });
+  }
+
+  // elige un índice no usado de la columna y lo marca como usado
+  function pickUnusedIndex(key) {
+    var pool = [];
+    for (var i = 0; i < state[key].length; i++) {
+      if (!used[key].has(i)) pool.push(i);
+    }
+    var idx = pool[Math.floor(Math.random() * pool.length)];
+    used[key].add(idx);
+    return idx;
   }
 
   function pickTriplet() {
-    // total de combinaciones posibles
-    var total = KEYS.reduce(function (acc, k) {
-      return acc * state[k].length;
-    }, 1);
-
-    var triplet, attempts = 0;
-    do {
-      triplet = {};
-      KEYS.forEach(function (k) {
-        triplet[k] = randIndex(state[k].length);
-      });
-      attempts++;
-    } while (
-      total > 1 &&
-      lastTriplet &&
-      attempts < 20 &&
-      KEYS.every(function (k) { return triplet[k] === lastTriplet[k]; })
-    );
-
-    lastTriplet = triplet;
+    if (!canSpin()) return null;
+    var triplet = {};
+    KEYS.forEach(function (k) { triplet[k] = pickUnusedIndex(k); });
     return triplet;
+  }
+
+  function addToHistory(triplet) {
+    var li = document.createElement("li");
+    KEYS.forEach(function (k, i) {
+      var span = document.createElement("span");
+      span.textContent = state[k][triplet[k]];
+      li.appendChild(span);
+      if (i < KEYS.length - 1) {
+        var sep = document.createElement("span");
+        sep.className = "combo-sep";
+        sep.textContent = "·";
+        li.appendChild(sep);
+      }
+    });
+    historyList.appendChild(li);
   }
 
   /* ---- Animación de los reels ---- */
@@ -233,9 +253,17 @@
     strip.style.transform = "translateY(" + (-finalPos * itemH) + "px)";
   }
 
+  // habilita/deshabilita la flecha y muestra el aviso según queden ítems
+  function updateNextState() {
+    var more = canSpin();
+    nextBtn.disabled = !more;
+    exhaustedMsg.classList.toggle("hidden", more);
+  }
+
   function spin() {
     if (spinning) return;
     var triplet = pickTriplet();
+    if (!triplet) { updateNextState(); return; }
 
     if (animEnabled) {
       spinning = true;
@@ -245,8 +273,12 @@
       }));
       setTimeout(function () {
         spinning = false;
-        nextBtn.disabled = false;
+        addToHistory(triplet);
+        updateNextState();
       }, maxDur * 1000 + 80);
+    } else {
+      addToHistory(triplet);
+      updateNextState();
     }
 
     KEYS.forEach(function (k) { spinReel(k, triplet[k]); });
@@ -270,6 +302,8 @@
 
   goBtn.addEventListener("click", function () {
     if (!allColumnsReady()) return;
+    resetUsed();
+    exhaustedMsg.classList.add("hidden");
     showRoulette();
     spin();
   });
