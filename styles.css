@@ -313,6 +313,9 @@ body {
 }
 .exhausted-msg.hidden { display: none; }
 
+#export-btn { display: block; margin: 14px auto 0; }
+#export-btn.hidden { display: none; }
+
 /* ===== Lista de combinaciones ===== */
 .history {
   max-width: 640px;

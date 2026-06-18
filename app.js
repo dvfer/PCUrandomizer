@@ -11,6 +11,7 @@
   var animEnabled = loadAnim();
   var used = { personajes: new Set(), caracteristicas: new Set(), universos: new Set() };
   var spinning = false;
+  var history = [];
 
   /* ---- Persistencia ---- */
   function loadData() {
@@ -49,6 +50,7 @@
   var modalConfirm = document.getElementById("modal-confirm");
   var modalCancel = document.getElementById("modal-cancel");
   var exhaustedMsg = document.getElementById("exhausted-msg");
+  var exportBtn = document.getElementById("export-btn");
   var historyList = document.getElementById("history-list");
 
   var columns = {}; // key -> { input, chips }
@@ -158,6 +160,7 @@
   /* ---- Generación de tripletas (sin reemplazo por columna) ---- */
   function resetUsed() {
     KEYS.forEach(function (k) { used[k].clear(); });
+    history = [];
     historyList.innerHTML = "";
   }
 
@@ -187,10 +190,14 @@
   }
 
   function addToHistory(triplet) {
+    var entry = {};
+    KEYS.forEach(function (k) { entry[k] = state[k][triplet[k]]; });
+    history.push(entry);
+
     var li = document.createElement("li");
     KEYS.forEach(function (k, i) {
       var span = document.createElement("span");
-      span.textContent = state[k][triplet[k]];
+      span.textContent = entry[k];
       li.appendChild(span);
       if (i < KEYS.length - 1) {
         var sep = document.createElement("span");
@@ -200,6 +207,21 @@
       }
     });
     historyList.appendChild(li);
+  }
+
+  function downloadExcel() {
+    if (typeof XLSX === "undefined" || !history.length) return;
+    var rows = history.map(function (entry) {
+      return {
+        Personaje: entry.personajes,
+        Características: entry.caracteristicas,
+        Universo: entry.universos
+      };
+    });
+    var ws = XLSX.utils.json_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Combinaciones");
+    XLSX.writeFile(wb, "combinaciones.xlsx");
   }
 
   /* ---- Animación de los reels ---- */
@@ -257,7 +279,9 @@
   function updateNextState() {
     var more = canSpin();
     nextBtn.disabled = !more;
-    exhaustedMsg.classList.toggle("hidden", more);
+    var exhausted = !more;
+    exhaustedMsg.classList.toggle("hidden", !exhausted);
+    exportBtn.classList.toggle("hidden", !exhausted);
   }
 
   function spin() {
@@ -304,6 +328,7 @@
     if (!allColumnsReady()) return;
     resetUsed();
     exhaustedMsg.classList.add("hidden");
+    exportBtn.classList.add("hidden");
     showRoulette();
     spin();
   });
@@ -326,6 +351,7 @@
 
   nextBtn.addEventListener("click", spin);
   backBtn.addEventListener("click", showInput);
+  exportBtn.addEventListener("click", downloadExcel);
 
   animToggle.addEventListener("click", function () {
     animEnabled = !animEnabled;
